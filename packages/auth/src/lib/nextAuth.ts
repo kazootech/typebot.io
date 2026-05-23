@@ -26,6 +26,7 @@ const nextAuth = NextAuth((req) => ({
   adapter: createAuthPrismaAdapter(prisma),
   secret: env.ENCRYPTION_SECRET,
   providers,
+  basePath: "/api/auth",
   trustHost: env.VERCEL_GIT_COMMIT_SHA ? undefined : true,
   pages: {
     signIn: "/signin",

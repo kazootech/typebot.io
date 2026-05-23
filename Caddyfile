@@ -1,0 +1,38 @@
+:3004 {
+	handle_path /typebot* {
+		reverse_proxy localhost:3002
+	}
+	handle_path /viewer* {
+		reverse_proxy localhost:3003
+	}
+	handle /api/* {
+		reverse_proxy localhost:3002
+	}
+	handle /_next/* {
+		reverse_proxy localhost:3002
+	}
+	handle /__ENV.js {
+		reverse_proxy localhost:3002
+	}
+	handle /signin* {
+		reverse_proxy localhost:3002
+	}
+	handle /register {
+		reverse_proxy localhost:3002
+	}
+	handle /onboarding* {
+		reverse_proxy localhost:3002
+	}
+	handle /typebots* {
+		reverse_proxy localhost:3002
+	}
+	handle /images/* {
+		reverse_proxy localhost:3002
+	}
+	handle /favicon* {
+		reverse_proxy localhost:3002
+	}
+	handle {
+		reverse_proxy localhost:18789
+	}
+}

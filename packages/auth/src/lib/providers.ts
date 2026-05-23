@@ -52,6 +52,14 @@ if (env.GOOGLE_AUTH_CLIENT_ID && env.GOOGLE_AUTH_CLIENT_SECRET)
       clientId: env.GOOGLE_AUTH_CLIENT_ID,
       clientSecret: env.GOOGLE_AUTH_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
+      checks: ["pkce", "state"],
     }),
   );
 
