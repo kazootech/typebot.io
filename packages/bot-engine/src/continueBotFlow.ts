@@ -117,11 +117,13 @@ export const continueBotFlow = async (
   let continueReply: SuccessReply | SkipReply | undefined;
 
   if (isInputBlock(block) && isInputMessage(reply)) {
+    console.log('[continueBotFlow] Input block found, validating reply:', reply?.text?.substring(0,50), 'replyId:', reply?.metadata?.replyId, 'block type:', block.type);
     const parsedReplyResult = validateAndParseInputMessage(reply, {
       block,
       variables: newSessionState.typebotsQueue[0].typebot.variables,
       sessionStore,
     });
+    console.log('[continueBotFlow] parsedReplyResult:', parsedReplyResult.status, 'outgoingEdgeId:', parsedReplyResult.outgoingEdgeId, 'content:', parsedReplyResult.content?.substring(0,50));
 
     if (
       parsedReplyResult.status === "success" &&
@@ -216,6 +218,7 @@ export const continueBotFlow = async (
     variables: newSessionState.typebotsQueue[0].typebot.variables,
     sessionStore,
   });
+  console.log('[continueBotFlow] nextEdge:', nextEdge, 'continueReply status:', continueReply?.status, 'block outgoingEdgeId:', block.outgoingEdgeId?.substring(0,12));
 
   const content =
     continueReply && "content" in continueReply

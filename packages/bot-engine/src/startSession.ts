@@ -542,11 +542,34 @@ const convertStartTypebotToTypebotInSession = (
 ): TypebotInSession => {
   const isAtLeastV6 = (typebot: StartTypebot): typebot is StartTypebotV6 =>
     Number(typebot.version) >= 6;
+  // Patch: populate block/item outgoingEdgeId from edges (builder doesn't set them)
+  const patchedGroups = typebot.groups.map((group: any) => ({
+    ...group,
+    blocks: group.blocks?.map((block: any) => {
+      // Fix block outgoingEdgeId
+      if (!block.outgoingEdgeId) {
+        const blockEdge = typebot.edges?.find((e: any) =>
+          e.from?.blockId === block.id && !e.from?.itemId
+        );
+        if (blockEdge) block.outgoingEdgeId = blockEdge.id;
+      }
+      // Fix item outgoingEdgeId
+      if (block.items) {
+        block.items = block.items.map((item: any) => {
+          if (item.outgoingEdgeId) return item;
+          const edge = typebot.edges?.find((e: any) => e.from?.itemId === item.id);
+          return edge ? { ...item, outgoingEdgeId: edge.id } : item;
+        });
+      }
+      return block;
+    }),
+  }));
+
   if (isAtLeastV6(typebot)) {
     return {
       version: typebot.version,
       id: typebot.id,
-      groups: typebot.groups,
+      groups: patchedGroups,
       edges: typebot.edges,
       variables: startVariables,
       events: typebot.events,
@@ -556,7 +579,7 @@ const convertStartTypebotToTypebotInSession = (
   return {
     version: typebot.version,
     id: typebot.id,
-    groups: typebot.groups,
+    groups: patchedGroups,
     edges: typebot.edges,
     variables: startVariables,
     events: typebot.events,
