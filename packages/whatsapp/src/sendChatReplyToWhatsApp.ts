@@ -32,6 +32,7 @@ export const sendChatReplyToWhatsApp = async ({
   credentials,
   state,
 }: Props): Promise<ClientSideActionExecutionResult | undefined> => {
+  console.log("[sendChatReplyToWhatsApp] Sending", messages?.length || 0, "messages to", to, "hasInput:", !!input);
   const messagesBeforeInput = isLastMessageIncludedInInput(
     input,
     messages.at(-1),

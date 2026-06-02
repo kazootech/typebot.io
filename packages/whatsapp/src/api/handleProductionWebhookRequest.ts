@@ -81,6 +81,9 @@ export const handleProductionWebhookRequest = async ({
 
   const incomingMessagesDetails = groupIncomingWebhookEntriesPerUser(entry);
 
+  console.log('[WhatsApp Production Webhook] Credentials data keys:', credentialsData ? Object.keys(credentialsData).join(',') : 'UNDEFINED');
+  console.log('[WhatsApp Production Webhook] Incoming messages:', incomingMessagesDetails.size);
+
   // Allows us to process the event in the background and return the response right away
   // because WhatsApp expects a response in less than 3 seconds
   after(async () => {
@@ -97,6 +100,7 @@ export const handleProductionWebhookRequest = async ({
         ] of incomingMessagesDetails.entries()) {
           for (const [from, parsedEntries] of fromMap.entries()) {
             try {
+              console.log(`[WhatsApp] resumeWhatsAppFlow for ${phoneNumberId}-${from}, messages:`, parsedEntries.length);
               await resumeWhatsAppFlow({
                 receivedMessages: parsedEntries.map(
                   (parsedEntry) => parsedEntry.receivedMessages,
@@ -113,6 +117,7 @@ export const handleProductionWebhookRequest = async ({
                 referral: parsedEntries[0].referral,
               });
             } catch (err) {
+              console.error('[WhatsApp] resumeWhatsAppFlow error:', err);
               if (err instanceof WhatsAppError) {
                 console.log("Known WA error", err.message, err.details);
               } else {

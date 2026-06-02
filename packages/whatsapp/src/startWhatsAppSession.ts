@@ -37,13 +37,16 @@ export const startWhatsAppSession = async ({
   contact,
   referral,
   sessionStore,
-}: Props): Promise<
-  ContinueChatResponse & {
-    newSessionState: SessionState;
-    visitedEdges: Prisma.VisitedEdge[];
-    setVariableHistory: SetVariableHistoryItem[];
-  }
-> => {
+}: Props): Promise<{
+  reply: (sentMessages: WhatsAppSendingMessage[]) => Promise<ContinueChatResponse | undefined>;
+  savedState: Pick<SessionState, "currentBlock" | "typebotsQueue" | "whatsApp">;
+  settings: Settings | undefined;
+  publicTypebotId: PublicTypebot["id"] | undefined;
+  sessionId: string;
+  variables: Typebot["variables"];
+  setVariableHistory: SetVariableHistoryItem[];
+}> => {
+  console.log("[startWhatsAppSession] Starting session for workspace:", workspaceId, "contact:", contact?.phoneNumber);
   const publicTypebotsWithWhatsAppEnabled =
     (await prisma.publicTypebot.findMany({
       where: {

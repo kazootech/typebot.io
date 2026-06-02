@@ -16,6 +16,7 @@ export const sendWhatsAppMessage = async ({
   message,
   credentials,
 }: Props) => {
+  console.log("[sendWhatsAppMessage] Sending to", to, "via", credentials.phoneNumberId, "type:", message.type);
   try {
     const json = {
       messaging_product: "whatsapp",
