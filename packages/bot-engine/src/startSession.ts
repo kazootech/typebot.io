@@ -542,18 +542,71 @@ const convertStartTypebotToTypebotInSession = (
 ): TypebotInSession => {
   const isAtLeastV6 = (typebot: StartTypebot): typebot is StartTypebotV6 =>
     Number(typebot.version) >= 6;
-  // Patch: populate block/item outgoingEdgeId from edges (builder doesn't set them)
-  const patchedGroups = typebot.groups.map((group: any) => ({
+  // Patch: fix builder bugs — missing outgoingEdgeId + orphan groups
+  // 1. Find orphan groups (no incoming edge, not first group, not event target)
+  const edgeTargetGroupIds = new Set(
+    (typebot.edges ?? []).map((e: any) => e.to?.groupId).filter(Boolean)
+  );
+  const eventTargetEdgeIds = new Set(
+    (typebot.events ?? [])
+      .filter((ev: any) => ev.outgoingEdgeId)
+      .map((ev: any) => ev.outgoingEdgeId)
+  );
+  const eventTargetGroupIds = new Set(
+    (typebot.edges ?? [])
+      .filter((e: any) => eventTargetEdgeIds.has(e.id))
+      .map((e: any) => e.to?.groupId)
+      .filter(Boolean)
+  );
+
+  // Merge orphan groups into groups that have a disconnected last block.
+  // The builder sometimes splits blocks into separate groups without edges.
+  // Find groups where the last block has no outgoingEdgeId and no edge from it,
+  // and the orphan group's blocks logically follow.
+  const allEdgeFromBlockIds = new Set(
+    (typebot.edges ?? []).map((e: any) => e.from?.blockId).filter(Boolean)
+  );
+  const mergedGroups = [...typebot.groups];
+  for (let i = mergedGroups.length - 1; i >= 1; i--) {
+    const g = mergedGroups[i];
+    if (
+      !edgeTargetGroupIds.has(g.id) &&
+      !eventTargetGroupIds.has(g.id) &&
+      g.blocks?.length > 0
+    ) {
+      // Find a group whose last block has no outgoing edge (dead-end)
+      // That's where this orphan's blocks should go
+      for (let j = 0; j < mergedGroups.length; j++) {
+        if (j === i) continue;
+        const target = mergedGroups[j];
+        const lastBlock = target.blocks?.[target.blocks.length - 1];
+        if (
+          lastBlock &&
+          !lastBlock.outgoingEdgeId &&
+          !allEdgeFromBlockIds.has(lastBlock.id) &&
+          lastBlock.type !== 'choice input' &&
+          lastBlock.type !== 'text input'
+        ) {
+          console.log('[startSession] Merging orphan', g.title, 'into', target.title);
+          target.blocks = [...(target.blocks ?? []), ...(g.blocks ?? [])];
+          mergedGroups.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }
+  console.log('[startSession] Groups after merge:', mergedGroups.length, 'was:', typebot.groups.length);
+
+  // 2. Backfill outgoingEdgeId on blocks and items from edges
+  const patchedGroups = mergedGroups.map((group: any) => ({
     ...group,
     blocks: group.blocks?.map((block: any) => {
-      // Fix block outgoingEdgeId
       if (!block.outgoingEdgeId) {
         const blockEdge = typebot.edges?.find((e: any) =>
           e.from?.blockId === block.id && !e.from?.itemId
         );
         if (blockEdge) block.outgoingEdgeId = blockEdge.id;
       }
-      // Fix item outgoingEdgeId
       if (block.items) {
         block.items = block.items.map((item: any) => {
           if (item.outgoingEdgeId) return item;
