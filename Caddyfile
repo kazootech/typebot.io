@@ -1,4 +1,7 @@
 :3004 {
+	handle_path /webhook/whatsapp {
+		reverse_proxy localhost:3001
+	}
 	handle_path /typebot* {
 		reverse_proxy localhost:3002
 	}
