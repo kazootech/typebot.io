@@ -93,6 +93,7 @@ export const resumeWhatsAppFlow = async ({
     });
 
   let session = await getSession(sessionId);
+  console.log('[resumeWhatsAppFlow] Session found:', !!session, 'hasState:', !!session?.state, 'currentBlockId:', session?.state?.currentBlockId?.substring(0,12));
 
   if (session && !session.state) {
     if (
@@ -131,10 +132,12 @@ export const resumeWhatsAppFlow = async ({
   }
 
   const currentTypebot = session?.state?.typebotsQueue[0].typebot;
+  console.log('[resumeWhatsAppFlow] currentTypebot groups:', currentTypebot?.groups?.length, 'currentBlockId:', session?.state?.currentBlockId);
   const { block } =
     (currentTypebot && session?.state?.currentBlockId
       ? getBlockById(session.state.currentBlockId, currentTypebot.groups)
       : undefined) ?? {};
+  console.log('[resumeWhatsAppFlow] block found:', !!block, 'block type:', block?.type, 'block id:', block?.id?.substring(0,12));
   const reply = await convertWhatsAppMessageToTypebotMessage({
     messages: aggregationResponse.incomingMessages,
     workspaceId,
@@ -143,6 +146,7 @@ export const resumeWhatsAppFlow = async ({
     resultId: session?.state?.typebotsQueue[0].resultId,
     block,
   });
+  console.log('[resumeWhatsAppFlow] reply:', reply?.type, 'text:', reply?.text?.substring(0,50), 'replyId:', reply?.metadata?.replyId);
 
   await withSessionStore(sessionId, async (sessionStore) => {
     const {
